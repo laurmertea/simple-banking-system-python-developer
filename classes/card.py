@@ -17,21 +17,35 @@ class Card():
         self.iin = str(iin)
         self.checksum_type = checksum_type
         self.card_number_len = card_number_len
-        self.set_checksum()
         self.set_ain()
+        self.set_checksum()
         self.set_number()
         self.set_pin()
         self.set_balance(0)
 
+    def luhn_algo(self):
+        # multiply even-indexed digits by 2
+        multiplied_digits = [digit if index % 2 != 0 else int(digit) * 2 for index, digit in enumerate([*(self.mii + self.iin + self.ain)])]
+        # substract 9 from digits greater than 9
+        substracted_digits = [digit if int(digit) <= 9 else (int(digit) - 9) for digit in multiplied_digits]
+        # add all digits
+        summed_digits = sum(int(digit) for digit in [*substracted_digits])
+        if summed_digits % 10 == 0:
+            checksum = str(0)
+        else:
+            checksum = str(10 - (summed_digits % 10))
+        return checksum
+
     def set_checksum(self):
         """Set card checksum (last digit of card)."""
-        if self.checksum_type != "any":
-            print("Not supported yet!")
-        self.checksum = str(random.randint(0, 9))
+        if self.checksum_type == "luhn":
+            self.checksum = str(self.luhn_algo())
+        else:
+            self.checksum = str(random.randint(0, 9))
 
     def set_ain(self):
         """Set account identifier number (7th to 15th card number digit)."""
-        ain_len = self.card_number_len - len(self.mii) - len(self.iin) - len(self.checksum)
+        ain_len = self.card_number_len - len(self.mii) - len(self.iin) - 1 # len(self.checksum)
         self.ain = (str(random.randint(0, pow(10, ain_len) - 1))).zfill(ain_len)
 
     def set_number(self):
