@@ -122,14 +122,189 @@
 # Bye!
 
 import sys
+import random
 
+MENU_UNSUPPORTED_OPTION_MSG = 'Sorry, that option is unsupported!'
 MENU_EXIT_MSG = 'Bye!'
+LOGIN_CARD_MSG = 'Enter your card number:\n'
+LOGIN_PIN_MSG = 'Enter your PIN:\n'
+LOGIN_SUCCES = '\nYou have successfully logged in!\n'
+LOGIN_FAIL = '\nWrong card number or PIN!\n'
+LOGOUT_SUCCES = '\nYou have successfully logged out!\n'
+CREATE_CARD_MSG = '\nYour card has been created'
+CARD_NO_MSG = 'Your card number:'
+CARD_PIN_MSG = 'Your card PIN:'
+CARD_BALANCE_MSG = '\nBalance: '
 
-menu = ['1. Create an account', '2. Log into account', '0. Exit']
+guest_options = ['1. Create an account', '2. Log into account', '0. Exit']
+logged_in_options = ['1. Balance', '2. Log out', '0. Exit']
+logged_in = -1
 selected_option = None
+cards = []
 
-while selected_option != 0:
-    while selected_option not in range(0, 3):        
-        selected_option = int(input('\n'.join(menu) + '\n'))
-        if selected_option == 0:
-            sys.exit(MENU_EXIT_MSG)
+class Card():
+    """Create a card with a unique Customer Account Number and a PIN.
+
+    Keyword arguments:
+    mii -- Major Industry Identifier: the sort of institution that issued the card (default 4 - banking & financial institutions)
+    iin -- Issuer Identification Number: who issued the card (default 00000)
+    card_number_len -- Customer Account Number card length; it counts the `mii` & `iin` as well (default 16)
+    checksum -- Used to validate the credit card number using the Luhn algorithm (default "any")
+
+    """
+    def __init__(self, mii=4, iin="00000", card_number_len=16, checksum_type="any"):
+        self.mii = str(mii)
+        self.iin = str(iin)
+        self.checksum_type = checksum_type
+        self.card_number_len = card_number_len
+        self.set_checksum()
+        self.set_ain()
+        self.set_number()
+        self.set_pin()
+        self.set_balance(0)
+
+    def set_checksum(self):
+        """Set card checksum (last digit of card)."""
+        if self.checksum_type != "any":
+            print("Not supported yet!")
+        self.checksum = str(random.randint(0, 9))
+
+    def set_ain(self):
+        """Set account identifier number (7th to 15th card number digit)."""
+        ain_len = self.card_number_len - len(self.mii) - len(self.iin) - len(self.checksum)
+        self.ain = (str(random.randint(0, pow(10, ain_len) - 1))).zfill(ain_len)
+
+    def set_number(self):
+        """Set card number."""
+        self.number = self.mii + self.iin + self.ain + self.checksum
+
+    def set_pin(self):
+        """Set card PIN."""
+        pin_number = random.randint(0, 9999)
+        self.pin = (str(pin_number)).zfill(4)
+
+    def set_balance(self, sum):
+        """Set card balance to a given sum.
+    
+        Arguments:
+        sum -- the card balance to be set
+        """
+        self.balance = str(sum)
+
+    def created(self):
+        """Print created messages and card details."""
+        print(CREATE_CARD_MSG)
+        print(CARD_NO_MSG)
+        print(self.number)
+        print(CARD_PIN_MSG)
+        print(self.pin + '\n')
+
+    def get_balance(self):
+        """Print card balance."""
+        print(CARD_BALANCE_MSG + self.balance + '\n')
+
+    def __repr__(self):
+        return "Card (number: {}, pin: {}, balance: {})".format(
+            self.number, 
+            self.pin,
+            self.balance
+        )
+
+    def __str__(self):
+        return """
+        Current card details: card number is `{}`, pin number is `{}, card balance is `{}`.
+        """.format(
+            self.number, 
+            self.pin,
+            self.balance
+            )
+        
+def login(cards):
+    """Try and login with provided card data by searching card number and pin in cards array.
+    
+    Args:
+        cards -- the array where all the cards are stored
+
+    Returns:
+        card index position in the cards array if successful, -1 if otherwise. 
+    """
+    card_number = str(input(LOGIN_CARD_MSG))
+    card_pin = str(input(LOGIN_PIN_MSG))
+
+    for index, card in enumerate(cards):
+        if card_number == card.number:
+            if card_pin == card.pin:
+                return index
+    return -1
+
+def guest_menu(selected_option, index):
+    """Try and access selected option in the guest menu (see guest_options list).
+
+    Args:
+        selected_option -- valid integer matching an option from guest_options list
+        index -- card index position in the cards array or -1 if guest
+
+    Returns:
+        index
+    """
+    if selected_option == 0:
+        exit_sbs()
+    else:
+        if selected_option == 1:
+            current_card = Card()
+            cards.append(current_card)
+            current_card.created()
+        elif selected_option == 2:
+            index = login(cards)
+            if index != -1:
+                print(LOGIN_SUCCES)
+            else:
+                print(LOGIN_FAIL)
+        else:
+            print(MENU_UNSUPPORTED_OPTION_MSG)
+    return index
+
+def logged_in_menu(selected_option, index):
+    """Try and access selected option in the logged in menu (see logegd_in_options list).
+
+    Args:
+        selected_option -- valid integer matching an option from logged_in_options list
+        index -- card index position in the cards array or -1 if guest
+
+    Returns:
+        index
+    """
+    if selected_option == 0:
+        exit_sbs()
+    else:
+        if selected_option == 1:
+            cards[index].get_balance()
+        elif selected_option == 2:
+            print(LOGOUT_SUCCES)
+            index = -1
+        else:
+            print(MENU_UNSUPPORTED_OPTION_MSG)
+    return index
+
+def exit_sbs(message=MENU_EXIT_MSG):
+    """Exit with message.
+    
+    Keyword arguments:
+        message -- string to exit with as message (default MENU_EXIT_MSG)
+    """
+    sys.exit(message)
+
+while selected_option not in range(0, 3):
+    while selected_option != 0:        
+        if logged_in == -1:
+            try:
+                selected_option = int(input('\n'.join(guest_options) + '\n'))
+                logged_in = guest_menu(selected_option, logged_in)
+            except ValueError:
+                print(MENU_UNSUPPORTED_OPTION_MSG)
+        else:
+            try:
+                selected_option = int(input('\n'.join(logged_in_options) + '\n'))
+                logged_in = logged_in_menu(selected_option, logged_in)
+            except ValueError:
+                print(MENU_UNSUPPORTED_OPTION_MSG)
