@@ -9,3 +9,6 @@ In this project, you will find out how the banking system works and learn about 
 
 ### Stage 1/4: Card anatomy
 Find out what a credit card consists of
+
+### Stage 2/4: Luhn algorithm
+Implement Luhn Algorithm to check the card number for validity 
