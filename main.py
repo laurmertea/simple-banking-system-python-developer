@@ -41,7 +41,7 @@ def guest_menu(selected_option, index):
         exit_sbs()
     else:
         if selected_option == 1:
-            current_card = Card()
+            current_card = Card(checksum_type="luhn")
             cards.append(current_card)
             current_card.created()
         elif selected_option == 2:
