@@ -120,3 +120,16 @@
 # >0
 #
 # Bye!
+
+import sys
+
+MENU_EXIT_MSG = 'Bye!'
+
+menu = ['1. Create an account', '2. Log into account', '0. Exit']
+selected_option = None
+
+while selected_option != 0:
+    while selected_option not in range(0, 3):        
+        selected_option = int(input('\n'.join(menu) + '\n'))
+        if selected_option == 0:
+            sys.exit(MENU_EXIT_MSG)
