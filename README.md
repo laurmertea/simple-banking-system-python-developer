@@ -12,3 +12,7 @@ Find out what a credit card consists of
 
 ### Stage 2/4: Luhn algorithm
 Implement Luhn Algorithm to check the card number for validity 
+
+### Stage 3/4: I'm so lite
+Create a database and store your data in it
+ 
