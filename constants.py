@@ -14,3 +14,6 @@ CREATE_CARD_MSG = '\nYour card has been created'
 CARD_NO_MSG = 'Your card number:'
 CARD_PIN_MSG = 'Your card PIN:'
 CARD_BALANCE_MSG = '\nBalance: '
+
+# DATABASE SECTION
+DATABASE_FILE = 'card.s3db'
