@@ -152,10 +152,10 @@ class Card():
     def luhn_algo(self):
         # multiply even-indexed digits by 2
         multiplied_digits = [digit if index % 2 != 0 else int(digit) * 2 for index, digit in enumerate([*(self.mii + self.iin + self.ain)])]
-        # substract 9 from digits greater than 9
-        substracted_digits = [digit if int(digit) <= 9 else (int(digit) - 9) for digit in multiplied_digits]
+        # subtract 9 from digits greater than 9
+        subtracted_digits = [digit if int(digit) <= 9 else (int(digit) - 9) for digit in multiplied_digits]
         # add all digits
-        summed_digits = sum(int(digit) for digit in [*substracted_digits])
+        summed_digits = sum(int(digit) for digit in [*subtracted_digits])
         if summed_digits % 10 == 0:
             self.checksum = str(0)
         else:
