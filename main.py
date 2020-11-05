@@ -2,91 +2,100 @@ import sys
 import random
 import constants
 from classes.card import Card
+from classes.database import Database
 
 
 guest_options = ['1. Create an account', '2. Log into account', '0. Exit']
 logged_in_options = ['1. Balance', '2. Log out', '0. Exit']
 logged_in = -1
 selected_option = None
-cards = []
+db=Database()
+db.connect()
 
 
-def login(cards):
-    """Try and login with provided card data by searching card number and pin in cards array.
-    
-    Args:
-        cards -- the array where all the cards are stored
+def login():
+    """Try and login with provided card data by searching card number and pin in the database.
 
     Returns:
-        card index position in the cards array if successful, -1 if otherwise. 
+        The card id if successful, -1 if otherwise.
     """
     card_number = str(input(constants.LOGIN_CARD_INPUT))
     card_pin = str(input(constants.LOGIN_PIN_INPUT))
+    # if found, the response contains the card data (id, number, pin, balance)
+    response = db.get_card_data_by_number(card_number)
 
-    for index, card in enumerate(cards):
-        if card_number == card.number:
-            if card_pin == card.pin:
-                return index
-    return -1
+    if not response:
+        return -1
+    if response[2] != card_pin:
+        return -1
+    return response[0]
 
 
-def guest_menu(selected_option, index):
+def show_balance(balance):
+    """Print the given balance."""
+    print(constants.CARD_BALANCE_MSG + str(balance) + '\n')
+
+
+def guest_menu(selected, card_id):
     """Try and access selected option in the guest menu (see guest_options list).
 
-    Args:
-        selected_option -- valid integer matching an option from guest_options list
-        index -- card index position in the cards array or -1 if guest
+    Arguments:
+        selected -- a valid integer matching an option from guest_options list
+        card_id -- the card id or -1 if guest
 
     Returns:
-        index
+        The card id or -1 if guest
     """
     if selected_option == 0:
         exit_sbs()
     else:
         if selected_option == 1:
             current_card = Card(checksum_type="luhn")
-            cards.append(current_card)
+            db.create_card_record(current_card.get_data())
             current_card.created()
         elif selected_option == 2:
-            index = login(cards)
-            if index != -1:
+            card_id = login()
+            if card_id != -1:
                 print(constants.LOGIN_SUCCESS_MSG)
             else:
                 print(constants.LOGIN_FAIL_MSG)
         else:
             print(constants.MENU_UNSUPPORTED_OPTION_MSG)
-    return index
+    return card_id
 
 
-def logged_in_menu(selected_option, index):
-    """Try and access selected option in the logged in menu (see logegd_in_options list).
+def logged_in_menu(selected, card_id):
+    """Try and access selected option in the logged in menu (see logged_in_options list).
 
-    Args:
-        selected_option -- valid integer matching an option from logged_in_options list
-        index -- card index position in the cards array or -1 if guest
+    Arguments:
+        selected -- valid integer matching an option from logged_in_options list
+        card_id -- card id or -1 if guest
 
     Returns:
-        index
+        The card id or -1 if guest
     """
     if selected_option == 0:
         exit_sbs()
     else:
         if selected_option == 1:
-            cards[index].get_balance()
+            # if found, the response contains the card data (id, number, pin, balance)
+            response = db.get_card_data_by_id(card_id)
+            show_balance(response[3])
         elif selected_option == 2:
             print(constants.LOGOUT_SUCCESS_MSG)
-            index = -1
+            card_id = -1
         else:
             print(constants.MENU_UNSUPPORTED_OPTION_MSG)
-    return index
+    return card_id
 
 
 def exit_sbs(message=constants.MENU_EXIT_MSG):
-    """Exit with message.
+    """Exit with message and close database connection.
     
     Keyword arguments:
         message -- string to exit with as message (default MENU_EXIT_MSG)
     """
+    db.disconnect()
     sys.exit(message)
 
 
