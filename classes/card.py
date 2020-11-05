@@ -2,7 +2,8 @@ import sys
 import random
 import constants
 
-class Card():
+
+class Card:
     """Create a card with a unique Customer Account Number and a PIN.
 
     Keyword arguments:
@@ -15,12 +16,17 @@ class Card():
     def __init__(self, mii=4, iin="00000", card_number_len=16, checksum_type="any"):
         self.mii = str(mii)
         self.iin = str(iin)
+        self.checksum = ""
         self.checksum_type = checksum_type
         self.card_number_len = card_number_len
+        self.ain = ""
         self.set_ain()
         self.set_checksum()
+        self.number = ""
         self.set_number()
+        self.pin = ""
         self.set_pin()
+        self.balance = ""
         self.set_balance(0)
 
     def luhn_algo(self):
