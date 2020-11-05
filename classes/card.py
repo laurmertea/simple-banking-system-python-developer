@@ -83,6 +83,10 @@ class Card:
         """Print card balance."""
         print(constants.CARD_BALANCE_MSG + self.balance + '\n')
 
+    def get_data(self):
+        """Return a list with the card data."""
+        return (self.number, self.pin, self.balance)
+        
     def __repr__(self):
         return "Card (number: {}, pin: {}, balance: {})".format(
             self.number, 
