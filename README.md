@@ -15,4 +15,6 @@ Implement Luhn Algorithm to check the card number for validity
 
 ### Stage 3/4: I'm so lite
 Create a database and store your data in it
- 
+
+### Stage 4/4: Advanced system
+Improve your system by extending its functionality.
