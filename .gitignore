@@ -134,3 +134,6 @@ notes.md
 
 # Tests
 test.py
+
+# Db
+*.s3db
