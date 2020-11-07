@@ -191,7 +191,44 @@ class Database:
         
         if self.verbose:
             self.print_record_add_success_message(cur.lastrowid, "card")
-        
+
+    def get_update_card_sql(self):
+        """Return the default SQL to update a card into the card table."""
+        return ''' UPDATE card
+                SET number = ? ,
+                    pin = ? ,
+                    balance = ?
+                WHERE id = ?'''
+
+    def update_card_record(self, data, update_card_sql=""):
+        """Update a database card record.
+
+        Arguments:
+            data -- the card data containing updated values
+            connection -- the database connection
+        """
+        if update_card_sql == "":
+            update_card_sql = self.get_update_card_sql()
+        cur = self.connection.cursor()
+        cur.execute(update_card_sql, data)
+        self.connection.commit()
+
+    def get_delete_card_sql(self):
+        """Return the default SQL to delete a card from the card table by card id."""
+        return 'DELETE FROM card WHERE id=?'
+
+    def delete_card_record(self, card_id, delete_card_sql=""):
+        """Delete a database card record by id.
+
+        Arguments:
+            card_id -- the card record id
+            connection -- the database connection
+        """
+        if delete_card_sql == "":
+            delete_card_sql = self.get_delete_card_sql()
+        cur = self.connection.cursor()
+        cur.execute(delete_card_sql, (card_id,))
+        self.connection.commit()
 
     def get_card_data_by_number(self, number):
         """Return the card data based on the given card number.
