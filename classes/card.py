@@ -11,27 +11,43 @@ class Card:
     iin -- Issuer Identification Number: who issued the card (default 00000)
     card_number_len -- Customer Account Number card length; it counts the `mii` & `iin` as well (default 16)
     checksum -- Used to validate the credit card number using the Luhn algorithm (default "any")
+    data -- Used when passing an existing card
 
     """
-    def __init__(self, mii=4, iin="00000", card_number_len=16, checksum_type="any"):
-        self.mii = str(mii)
-        self.iin = str(iin)
-        self.checksum = ""
-        self.checksum_type = checksum_type
-        self.card_number_len = card_number_len
-        self.ain = ""
-        self.set_ain()
-        self.set_checksum()
-        self.number = ""
-        self.set_number()
-        self.pin = ""
-        self.set_pin()
-        self.balance = ""
-        self.set_balance(0)
+    def __init__(self, mii=4, iin="00000", card_number_len=16, checksum_type="any", data=()):
+        if not data:
+            self.mii = str(mii)
+            self.iin = str(iin)
+            self.checksum = ""
+            self.checksum_type = checksum_type
+            self.card_number_len = card_number_len
+            self.ain = ""
+            self.set_ain()
+            self.set_checksum()
+            self.number = ""
+            self.set_number()
+            self.pin = ""
+            self.set_pin()
+            self.balance = ""
+            self.set_balance()
+        else:
+            self.set_id(data[0])
+            self.set_number(data[1])
+            self.set_pin(data[2])
+            self.set_balance(data[3])
 
-    def luhn_algo(self):
+    def luhn_algo(self, to_check=None):
+        """Set the card digits based on the Luhn algorithm or check a given number.
+        
+        Keyword arguments:
+            to_check -- used when checking a given card number against the algorithm
+        """
+        if to_check:
+            original = to_check
+        else:
+            original = self.mii + self.iin + self.ain
         # multiply even-indexed digits by 2
-        multiplied_digits = [digit if index % 2 != 0 else int(digit) * 2 for index, digit in enumerate([*(self.mii + self.iin + self.ain)])]
+        multiplied_digits = [digit if index % 2 != 0 else int(digit) * 2 for index, digit in enumerate([*(original)])]
         # substract 9 from digits greater than 9
         substracted_digits = [digit if int(digit) <= 9 else (int(digit) - 9) for digit in multiplied_digits]
         # add all digits
@@ -54,22 +70,42 @@ class Card:
         ain_len = self.card_number_len - len(self.mii) - len(self.iin) - 1 # len(self.checksum)
         self.ain = (str(random.randint(0, pow(10, ain_len) - 1))).zfill(ain_len)
 
-    def set_number(self):
-        """Set card number."""
-        self.number = self.mii + self.iin + self.ain + self.checksum
+    def set_id(self, card_id):
+        """Set the card id (used only for a pre-existing card)."""
+        self.id = card_id
 
-    def set_pin(self):
-        """Set card PIN."""
-        pin_number = random.randint(0, 9999)
-        self.pin = (str(pin_number)).zfill(4)
+    def set_number(self, number=None):
+        """Set the card number.
 
-    def set_balance(self, sum):
-        """Set card balance to a given sum.
+        Keyword arguments:
+            number -- the card number (used for a pre-existing card)
+        """
+        if not number:
+            self.set_checksum()
+            number = self.mii + self.iin + self.ain + self.checksum
+
+        self.number = number
+
+    def set_pin(self, pin=None):
+        """Set the card PIN.
+
+        Keyword arguments:
+            pin -- the card pin (used for a pre-existing card)
+        """
+        if not pin:
+            pin_number = random.randint(0, 9999)
+            pin = (str(pin_number)).zfill(4)
+        self.pin = pin
+
+    def set_balance(self, amount=None):
+        """Set the card balance to a given amount.
     
         Arguments:
-        sum -- the card balance to be set
+            amount -- the card balance to be set
         """
-        self.balance = str(sum)
+        if not amount:
+            amount = 0
+        self.balance = str(amount)
 
     def created(self):
         """Print created messages and card details."""
@@ -85,7 +121,10 @@ class Card:
 
     def get_data(self):
         """Return a list with the card data."""
-        return (self.number, self.pin, self.balance)
+        data = [self.number, self.pin, self.balance]
+        if hasattr(self, 'id'):
+            data.append(self.id)
+        return data
         
     def __repr__(self):
         return "Card (number: {}, pin: {}, balance: {})".format(
