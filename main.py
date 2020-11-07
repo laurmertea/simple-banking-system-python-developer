@@ -223,9 +223,11 @@ import constants
 from classes.card import Card
 from classes.database import Database
 
-
+# MENU OPTIONS SETUP
 guest_options = ['1. Create an account', '2. Log into account', '0. Exit']
 logged_in_options = ['1. Balance', '2. Add income', '3. Do transfer', '4. Close account', '5. Log out', '0. Exit']
+
+# AUTHENTICATION SETUP
 logged_in = -1
 selected_option = None
 db=Database()
@@ -248,11 +250,6 @@ def login():
     if response[2] != card_pin:
         return -1
     return response[0]
-
-
-def show_balance(balance):
-    """Print the given balance."""
-    print(constants.CARD_BALANCE_MSG + str(balance) + '\n')
 
 
 def guest_menu(selected, card_id):
@@ -323,10 +320,29 @@ def logged_in_menu(selected, card_id):
 
 
 def updated(old, new):
+    """Return if a value was updated.
+    
+    Returns
+        A boolean which is True if the value was updated, or False otherwise
+    """
     return (old == new) is False
 
 
 def update_balance(card, amount, success_msg="", fail_msg="", quiet=False):
+    """Update the card balance and return the update result.
+    
+    Arguments:
+        card -- the card object
+        amount -- the balance amount to update
+        success_msg -- the update success message
+        fail_msg -- the update fail message
+    
+    Keyword arguments:
+        quiet -- a boolean that controls if success / fail messages are shown 
+
+    Returns:
+        A boolean with the update result
+    """
     result = False
     old_balance = card.balance
     card.set_balance(int(old_balance) + int(amount))
@@ -342,6 +358,11 @@ def update_balance(card, amount, success_msg="", fail_msg="", quiet=False):
 
 
 def add_income(card):
+    """Add income to own card.
+    
+    Arguments:
+        card -- the card object
+    """
     income = str(input(constants.CARD_ADD_INCOME_MSG))
     while not income.isdigit():
         print(constants.POSITIVE_INTEGER_FAIL)
@@ -350,6 +371,17 @@ def add_income(card):
 
 
 def valid_number(number, number_length=16, algo="luhn"):
+    """Check & return if a given card number passes the provided algorithm.
+    
+    Arguments:
+        number -- the given card number to check
+        age
+        fail_msg -- the update fail message
+    
+    Keyword arguments:
+        number_length -- the card number digits count
+        algo -- the provided algorithm
+    """
     result = False
     if not number.isdigit():
         return result
@@ -365,6 +397,11 @@ def valid_number(number, number_length=16, algo="luhn"):
 
 
 def check_amount(card, amount):
+    """"Check given amount.
+    
+    Returns:
+        a boolean that is False if the card doesn't have at least the given amount or if the amount is not a positive integer, or True otherwise
+    """
     if not amount.isdigit():
         print(constants.POSITIVE_INTEGER_FAIL)
         return False
@@ -375,6 +412,18 @@ def check_amount(card, amount):
 
 
 def check_number(card, number, algo="luhn"):
+    """Check given number against a set of checks: algorithm validity, ownership, existance in database.
+    
+    Arguments:
+        card -- the card object
+        number -- the card number
+    
+    Keyword Arguments:
+        algo -- the provided algorithm
+
+
+    Returns a boolean, that is False in case the number has failed the checks, or True otherwise
+    """
     if not valid_number(number, algo=algo):
         print(constants.CARD_TRANSFER_NUMBER_FAIL)
         return False
@@ -388,6 +437,11 @@ def check_number(card, number, algo="luhn"):
 
 
 def do_transfer(card):
+    """Attempt to do an amount transfer from one card to another.
+    
+    Arguments:
+        card -- the card object
+    """
     print(constants.CARD_TRANSFER_MSG)
     receiver = str(input(constants.CARD_TRANSFER_NUMBER_MSG))
     if not check_number(card, receiver):
