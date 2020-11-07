@@ -225,7 +225,7 @@ from classes.database import Database
 
 
 guest_options = ['1. Create an account', '2. Log into account', '0. Exit']
-logged_in_options = ['1. Balance', '2. Log out', '0. Exit']
+logged_in_options = ['1. Balance', '2. Add income', '3. Do transfer', '4. Close account', '5. Log out', '0. Exit']
 logged_in = -1
 selected_option = None
 db=Database()
@@ -296,17 +296,113 @@ def logged_in_menu(selected, card_id):
     if selected_option == 0:
         exit_sbs()
     else:
+        # if found, the response contains the card data (id, number, pin, balance)
+        response = db.get_card_data_by_id(card_id)
+        current_card = Card(data=response)
+        # show balance option
         if selected_option == 1:
-            # if found, the response contains the card data (id, number, pin, balance)
-            response = db.get_card_data_by_id(card_id)
-            show_balance(response[3])
-        elif selected_option == 2:
+            current_card.get_balance()
+        # add income option
+        elif selected == 2:
+            add_income(current_card)
+        # do transfer option
+        elif selected == 3:
+            do_transfer(current_card)
+        # close card option
+        elif selected == 4:
+            print(constants.CARD_CLOSE_MSG)
+            db.delete_card_record(current_card.id)
+            card_id = -1
+        # logout option
+        elif selected == 5:
             print(constants.LOGOUT_SUCCESS_MSG)
             card_id = -1
         else:
             print(constants.MENU_UNSUPPORTED_OPTION_MSG)
     return card_id
 
+
+def updated(old, new):
+    return (old == new) is False
+
+
+def update_balance(card, amount, success_msg="", fail_msg="", quiet=False):
+    result = False
+    old_balance = card.balance
+    card.set_balance(int(old_balance) + int(amount))
+    db.update_card_record(card.get_data())
+    if updated(old_balance, card.balance):
+        if not quiet:
+            print(success_msg)
+        result = True
+    else:
+        if not quiet:
+            print(fail_msg)
+    return result
+
+
+def add_income(card):
+    income = str(input(constants.CARD_ADD_INCOME_MSG))
+    while not income.isdigit():
+        print(constants.POSITIVE_INTEGER_FAIL)
+        income = str(input(constants.CARD_ADD_INCOME_MSG))
+    update_balance(card, income, constants.CARD_ADD_INCOME_SUCCESS, constants.CARD_ADD_INCOME_FAIL)
+
+
+def valid_number(number, number_length=16, algo="luhn"):
+    result = False
+    if not number.isdigit():
+        return result
+    if len(number) != number_length:
+        return result
+    data = (-1, number, 0000, -1)
+    fake_card = Card(data=data)
+    if algo == "luhn":
+        check_digit = fake_card.number[-1:]
+        to_check = fake_card.number[:len(fake_card.number)-1]
+        result = (check_digit == fake_card.luhn_algo(to_check))
+    return result
+
+
+def check_amount(card, amount):
+    if not amount.isdigit():
+        print(constants.POSITIVE_INTEGER_FAIL)
+        return False
+    if int(card.balance) < int(amount):
+        print(constants.CARD_TRANSFER_AMOUNT_FAIL)
+        return False
+    return True
+
+
+def check_number(card, number, algo="luhn"):
+    if not valid_number(number, algo=algo):
+        print(constants.CARD_TRANSFER_NUMBER_FAIL)
+        return False
+    if card.number == number:
+        print(constants.CARD_TRANSFER_NUMBER_OWN)
+        return False
+    if not db.get_card_data_by_number(number):
+        print(constants.CARD_TRANSFER_NUMBER_NONEXISTENT)
+        return False
+    return True
+
+
+def do_transfer(card):
+    print(constants.CARD_TRANSFER_MSG)
+    receiver = str(input(constants.CARD_TRANSFER_NUMBER_MSG))
+    if not check_number(card, receiver):
+        return False
+    amount = str(input(constants.CARD_TRANSFER_AMOUNT_MSG))
+    if not check_amount(card, amount):
+        return False
+    is_successful = update_balance(card, int(amount) * -1, quiet=True)
+    if is_successful:
+        receiver_card = Card(data=db.get_card_data_by_number(receiver))
+        is_successful = update_balance(receiver_card, int(amount), quiet=True)
+    if is_successful:
+        print(constants.CARD_TRANSFER_AMOUNT_SUCCESS)
+    else:
+        print(constants.CARD_TRANSFER_AMOUNT_FAIL)
 
 def exit_sbs(message=constants.MENU_EXIT_MSG):
     """Exit with message and close database connection.
